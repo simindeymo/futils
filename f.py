@@ -233,26 +233,66 @@ color = colorsClass()
 del colorsClass
 
 class consoleClass:
-    __printed = ''
+    def __init__(self, window):
+        self._printed = ''
+        self._win = win32con.GetConsoleWindow()
+    def focus(self):
+        self.show()
+        win32gui.BringWindowToTop(self._win)
+    def unfocus(self):
+        win32gui.SetForegroundWindow(self._win)
+    def hide(self):
+        win32gui.ShowWindow(self._win, win32con.SW_HIDE)
+    def show(self):
+        win32gui.ShowWindow(self._win, win32con.SW_SHOW)
+    def move(self, x, y):
+        win32gui.SetWindowPos(self._win, x, y, self.size[0], self.size[1])
+    def resize(self, width, height):
+        win32gui.SetWindowPos(self._win, self.position[0], self.position[1], width, height)
+    def minimize(self):
+        win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
+        return self.size
+    def maximize(self):
+        win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+        return self.size
+    def getName(self):
+        return win32con.GetConsoleTitle()
+    def setName(self, name):
+        return win32con.SetConsoleTitle(name)
+    @property
+    def visible(self):
+        return win32gui.IsWindowVisible(self._win)
+    @property
+    def position(self):
+        rect = win32gui.GetWindowRect(self._win)
+        x = rect[0]
+        y = rect[1]
+        return (x, y)
+    @property
+    def size(self):
+        rect = win32gui.GetWindowRect(self._win)
+        w = rect[2] - self.position[0]
+        h = rect[3] - self.position[1]
+        return (w, h)
     @property
     def printed(self):
-        return self.__printed.split('\n')
+        return self._printed.split('\n')
     def input(self, *string, anim=False, center=False, animDelay=10, color=color.text.white, newLine=True):
         string0 = ''
         for value in string:
             string0 += str(value)
         string = string0
         del string0
-        beforePrint = self.__printed
+        beforePrint = self._printed
         if not center:
             if not anim:
                 if newLine:
-                    self.__printed += '\n' + color + str(string)
+                    self._printed += '\n' + color + str(string)
                     return input(color + str(string))
                 else:
-                    self.__printed += color + str(string)
+                    self._printed += color + str(string)
                     os.system('cls')
-                    return input(self.__printed)
+                    return input(self._printed)
             else:
                 string = str(string)
                 no_full_str = ''
@@ -260,18 +300,18 @@ class consoleClass:
                     no_full_str += value
                     time.sleep(animDelay / 1000)
                     os.system('cls')
-                    print(self.__printed)
+                    print(self._printed)
                     print(color + no_full_str)
                 os.system('cls')
-                print(self.__printed)
-                self.__printed += '\n' + color + str(string)
+                print(self._printed)
+                self._printed += '\n' + color + str(string)
                 return input(color + no_full_str)
         else:
             if not anim:
                 line = [str(string)]
                 width = shutil.get_terminal_size().columns
                 position = (width - max(map(len, line))) // 2
-                self.__printed += '\n' + color + str(line[0].center(width))
+                self._printed += '\n' + color + str(line[0].center(width))
                 return input(color + str(line[0].center(width)))
             else:
                 lines = str(string)
@@ -280,11 +320,11 @@ class consoleClass:
                 no_full_str = ''
                 for value in list(string):
                     os.system('cls')
-                    print(self.__printed)
+                    print(self._printed)
                     time.sleep(animDelay / 1000)
                     print(color + no_full_str.center(width))
                     no_full_str += value
-                self.__printed += '\n' + str(color + no_full_str.center(width))
+                self._printed += '\n' + str(color + no_full_str.center(width))
                 return input(color + no_full_str.center(width))
     def print(self, *string, anim=False, center=False, animDelay=10, color=color.text.white, newLine=True, msBeforeDelete=None):
         string0 = ''
@@ -292,16 +332,16 @@ class consoleClass:
             string0 += str(value)
         string = string0
         del string0
-        beforePrint = self.__printed
+        beforePrint = self._printed
         if not center:
             if not anim:
                 if newLine:
                     print(color + str(string))
-                    self.__printed += '\n' + color + str(string)
+                    self._printed += '\n' + color + str(string)
                 else:
-                    self.__printed += color + str(string)
+                    self._printed += color + str(string)
                     os.system('cls')
-                    print(self.__printed)
+                    print(self._printed)
             else:
                 string = str(string)
                 no_full_str = ''
@@ -309,9 +349,9 @@ class consoleClass:
                     no_full_str += value
                     time.sleep(animDelay / 1000)
                     os.system('cls')
-                    print(self.__printed)
+                    print(self._printed)
                     print(color + no_full_str)
-                self.__printed += '\n' + color + str(string)
+                self._printed += '\n' + color + str(string)
         else:
             if not anim:
                 if type(string) == 'list':
@@ -322,7 +362,7 @@ class consoleClass:
                 position = (width - max(map(len, lines))) // 2
                 for line in lines:
                     print(color + line.center(width))
-                    self.__printed += '\n' + color + str(line.center(width))
+                    self._printed += '\n' + color + str(line.center(width))
             else:
                 if type(string) == 'list':
                     lines = str(string)
@@ -334,26 +374,26 @@ class consoleClass:
                     no_full_str = ''
                     for value in list(string):
                         os.system('cls')
-                        print(self.__printed)
+                        print(self._printed)
                         time.sleep(animDelay / 1000)
                         print(color + no_full_str.center(width))
                         no_full_str += value
-                    self.__printed += '\n' + str(color + no_full_str.center(width))
+                    self._printed += '\n' + str(color + no_full_str.center(width))
         if msBeforeDelete != None:
             def deleteDef():
                 nonlocal beforePrint, msBeforeDelete
                 time.sleep(msBeforeDelete/1000)
                 os.system('cls')
-                self.__printed = beforePrint
+                self._printed = beforePrint
                 return
             deleteThread = thrd.Thread(target=deleteDef)
             deleteThread.start()
     def clear(self, lines=0):
         if lines == 0:
             os.system('cls')
-            self.__printed = ''
+            self._printed = ''
         else:
-            splitLines = self.__printed.split('\n')
+            splitLines = self._printed.split('\n')
             fixedLines = ''
             i = 0
             for value in splitLines:
@@ -366,7 +406,7 @@ class consoleClass:
                 i += 1
             os.system('cls')
             print(fixedLines)
-            self.__printed = fixedLines
+            self._printed = fixedLines
     def run(self, cmd, show=False):
         if show:
             subprocess.check_call(cmd, shell=True)
@@ -673,9 +713,6 @@ class json:
         with open(self.file, 'w', encoding='utf-8') as file:
             jl.dump(to, file, indent=4, sort_keys=True, ensure_ascii=False)
 
-def title(name):
-    os.system('title '+name)
-
 def translate(text, from_, to_):
     translator = google_translator()
     return translator.translate(text, lang_src=from_, lang_tgt=to_)
@@ -749,3 +786,73 @@ class mega:
         self.remove(file)
         self.upload(files.localFile(name))
         files.remove(files.localFile(name))
+
+class window:
+    def __init__(self, window):
+        # self._win = win32con.GetConsoleWindow()
+        self._win = win32gui.FindWindow(None, window)
+    def __str__(self):
+        return self.name
+    def close(self):
+        win32gui.PostMessage(self._win, win32con.WM_CLOSE, 0, 0)
+    def focus(self):
+        self.show()
+        win32gui.BringWindowToTop(self._win)
+    def unfocus(self):
+        win32gui.SetForegroundWindow(self._win)
+    def hide(self):
+        win32gui.ShowWindow(self._win, win32con.SW_HIDE)
+    def show(self):
+        win32gui.ShowWindow(self._win, win32con.SW_SHOW)
+    def move(self, x, y):
+        win32gui.SetWindowPos(self._win, x, y, self.size[0], self.size[1])
+    def resize(self, width, height):
+        win32gui.SetWindowPos(self._win, self.position[0], self.position[1], width, height)
+    def minimize(self):
+        win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
+        return self.size
+    def maximize(self):
+        win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+        return self.size
+    @property
+    def visible(self):
+        return win32gui.IsWindowVisible(self._win)
+    @property
+    def position(self):
+        rect = win32gui.GetWindowRect(self._win)
+        x = rect[0]
+        y = rect[1]
+        return (x, y)
+    @property
+    def size(self):
+        rect = win32gui.GetWindowRect(self._win)
+        w = rect[2] - self.position[0]
+        h = rect[3] - self.position[1]
+        return (w, h)
+    @property
+    def name(self):
+        return win32gui.GetWindowText(self._win)
+    @property
+    def mouse(self):
+        class mouse:
+            nonlocal self
+            def click(self0, x, y, side='left'):
+                nonlocal self
+                global mouse
+                self.focus()
+                mouse.move(x+self.position[0], y+self.position[1])
+                mouse.click(side)
+            @property
+            def position(self0):
+                global mouse
+                return (self.position[0]-mouse.position[0], self.position[1]-mouse.position[1])
+
+
+def windows(onlyVisible=True):
+    all = []
+    def winEnumHandler(hwnd, ctx):
+        nonlocal all, onlyVisible
+        if win32gui.IsWindowVisible(hwnd) or onlyVisible == False:
+            all.append(window(win32gui.GetWindowText(hwnd)))
+    win32gui.EnumWindows(winEnumHandler, None)
+    return all
