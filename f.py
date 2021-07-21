@@ -233,7 +233,7 @@ color = colorsClass()
 del colorsClass
 
 class consoleClass:
-    def __init__(self, window):
+    def __init__(self):
         self._printed = ''
         self._win = win32con.GetConsoleWindow()
     def focus(self):
@@ -457,7 +457,6 @@ class thread:
     def stop(self):
         self.thread.join()
         self.isStarted = False
-threading = thread
 class timer:
     def __init__(self, func, interval):
         self.function = func
@@ -516,27 +515,6 @@ def copy(strr):
     pyperclip.copy(strr)
 def off():
     raise SystemExit
-def screenshot(outfile):
-    height = win32api.GetSystemMetrics(1)
-    width = win32api.GetSystemMetrics(0)
-    name = randStr(rand(1564, 7892))
-    format_ = file.split('.')[-1]
-    outfile_ = removeSuffix(outfile, format_)
-    hwnd = win32gui.FindWindow(None, name)
-    wDC = win32gui.GetWindowDC(hwnd)
-    dcObj = win32ui.CreateDCFromHandle(wDC)
-    cDC = dcObj.CreateCompatibleDC()
-    dataBitMap = win32ui.CreateBitmap()
-    dataBitMap.CreateCompatibleBitmap(dcObj, width, height)
-    cDC.SelectObject(dataBitMap)
-    cDC.BitBlt((0, 0),(width, height), dcObj, (0, 0), win32con.SRCCOPY)
-    dataBitMap.SaveBitmapFile(cDC, f'{outfile_}.bmp')
-    dcObj.DeleteDC()
-    cDC.DeleteDC()
-    win32gui.ReleaseDC(hwnd, wDC)
-    win32gui.DeleteObject(dataBitMap.GetHandle())
-    file.convert(f'{outfile_}.bmp', format_)
-    file.remove(f'{outfile_}.bmp')
 class date:
     day = int(datetime.datetime.today().strftime('%d'))
     month = int(datetime.datetime.today().strftime('%m'))
