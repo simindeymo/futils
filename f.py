@@ -23,9 +23,11 @@ import win32gui
 import win32api
 import win32ui
 import win32con
+import win32console
 import datetime
 import randstr
 import colorama
+import win32process
 from pytube import YouTube
 import youtubesearchpython as ys
 from selenium.webdriver import Firefox
@@ -118,7 +120,7 @@ blockObj = blockInput()
 class keyClass:
     global blockObj
     __block = blockObj
-    # keys = ['Ctrl', 'Shift', 'Alt', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\\', '!', '%', '^', '&', '\\', '*', '(', ')', '-', '_', '+', '=', '[', ']', '{', '}', '|', ';', ':', "'", '"', '/', '?', '.', '>', ',', '<', 'Escape', 'Space', 'BackSpace', 'Tab', 'Linefeed', 'Clear', 'Return', 'Pause', 'Scroll_Lock', 'Sys_Req', 'Delete', 'Home', 'Left', 'Up', 'Right', 'Down', 'Page_Up', 'Page_Down', 'End', 'Select', 'Print', 'Execute', 'Insert', 'Num_Lock', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
+    keys = ['Ctrl', 'Shift', 'Alt', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\\', '!', '%', '^', '&', '\\', '*', '(', ')', '-', '_', '+', '=', '[', ']', '{', '}', '|', ';', ':', "'", '"', '/', '?', '.', '>', ',', '<', 'Escape', 'Space', 'BackSpace', 'Tab', 'Linefeed', 'Clear', 'Return', 'Pause', 'Scroll_Lock', 'Sys_Req', 'Delete', 'Home', 'Left', 'Up', 'Right', 'Down', 'Page_Up', 'Page_Down', 'End', 'Select', 'Print', 'Execute', 'Insert', 'Num_Lock', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
     def press(self, key):
         kl.press(key)
     def release(self, key):
@@ -235,7 +237,7 @@ del colorsClass
 class consoleClass:
     def __init__(self):
         self._printed = ''
-        self._win = win32con.GetConsoleWindow()
+        self._win = win32console.GetConsoleWindow()
     def focus(self):
         self.show()
         win32gui.BringWindowToTop(self._win)
@@ -256,9 +258,13 @@ class consoleClass:
         win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         return self.size
     def getName(self):
-        return win32con.GetConsoleTitle()
+        return win32console.GetConsoleTitle()
     def setName(self, name):
-        return win32con.SetConsoleTitle(name)
+        return win32console.SetConsoleTitle(name)
+    def block(self):
+        win32gui.EnableWindow(self._win, False)
+    def unblock(self):
+        win32gui.EnableWindow(self._win, True)
     @property
     def visible(self):
         return win32gui.IsWindowVisible(self._win)
@@ -277,7 +283,45 @@ class consoleClass:
     @property
     def printed(self):
         return self._printed.split('\n')
-    def input(self, *string, anim=False, center=False, animDelay=10, color=color.text.white, newLine=True):
+    @property
+    def args(self):
+        args = []
+        for i in sys.argv:
+            if i != sys.argv[0]:
+                args.append(i)
+        return args
+    def input(self, *string, center=False, delay=0, color=color.text.white, newLine=True, whitelist=None, limit=None):
+        def inwlc(text, whitelist=None, count=None):
+            if whitelist == None and count == None:
+                input(text)
+            else:
+                was = ""
+                while True:
+                    key = keys.wait()
+                    if key == "backspace":
+                        was0 = ""
+                        for i in was:
+                            if i != was[-1]:
+                                was0 += i
+                        was = was0
+                    elif key == "enter":
+                        return was
+                    elif key == "space":
+                        was += " "
+                    else:
+                        if whitelist != None:
+                            if count != None:
+                                if key in whitelist:
+                                    if len(was) != count:
+                                        was += key
+                            else:
+                                if key in whitelist:
+                                    was += key
+                        elif count != None:
+                            if len(was) != count:
+                                was += key
+                    os.system("cls")
+                    print(was)
         string0 = ''
         for value in string:
             string0 += str(value)
@@ -285,34 +329,34 @@ class consoleClass:
         del string0
         beforePrint = self._printed
         if not center:
-            if not anim:
+            if delay == 0:
                 if newLine:
                     self._printed += '\n' + color + str(string)
-                    return input(color + str(string))
+                    return inwlc(color + str(string), whitelist, limit)
                 else:
                     self._printed += color + str(string)
                     os.system('cls')
-                    return input(self._printed)
+                    return inwlc(self._printed, whitelist, limit)
             else:
                 string = str(string)
                 no_full_str = ''
                 for value in list(string):
                     no_full_str += value
-                    time.sleep(animDelay / 1000)
+                    time.sleep(delay / 1000)
                     os.system('cls')
                     print(self._printed)
                     print(color + no_full_str)
                 os.system('cls')
                 print(self._printed)
                 self._printed += '\n' + color + str(string)
-                return input(color + no_full_str)
+                return inwlc(color + no_full_str, whitelist, limit)
         else:
-            if not anim:
+            if delay == 0:
                 line = [str(string)]
                 width = shutil.get_terminal_size().columns
                 position = (width - max(map(len, line))) // 2
                 self._printed += '\n' + color + str(line[0].center(width))
-                return input(color + str(line[0].center(width)))
+                return inwlc(color + str(line[0].center(width)), whitelist, limit)
             else:
                 lines = str(string)
                 width = shutil.get_terminal_size().columns
@@ -321,12 +365,12 @@ class consoleClass:
                 for value in list(string):
                     os.system('cls')
                     print(self._printed)
-                    time.sleep(animDelay / 1000)
+                    time.sleep(delay / 1000)
                     print(color + no_full_str.center(width))
                     no_full_str += value
                 self._printed += '\n' + str(color + no_full_str.center(width))
-                return input(color + no_full_str.center(width))
-    def print(self, *string, anim=False, center=False, animDelay=10, color=color.text.white, newLine=True, msBeforeDelete=None):
+                return inwlc(color + no_full_str.center(width), whitelist, limit)
+    def print(self, *string, center=False, delay=0, color=color.text.white, newLine=True, msBeforeDelete=None):
         string0 = ''
         for value in string:
             string0 += str(value)
@@ -334,7 +378,7 @@ class consoleClass:
         del string0
         beforePrint = self._printed
         if not center:
-            if not anim:
+            if delay == 0:
                 if newLine:
                     print(color + str(string))
                     self._printed += '\n' + color + str(string)
@@ -347,13 +391,13 @@ class consoleClass:
                 no_full_str = ''
                 for value in list(string):
                     no_full_str += value
-                    time.sleep(animDelay / 1000)
+                    time.sleep(delay / 1000)
                     os.system('cls')
                     print(self._printed)
                     print(color + no_full_str)
                 self._printed += '\n' + color + str(string)
         else:
-            if not anim:
+            if delay == 0:
                 if type(string) == 'list':
                     lines = str(string)
                 else:
@@ -375,7 +419,7 @@ class consoleClass:
                     for value in list(string):
                         os.system('cls')
                         print(self._printed)
-                        time.sleep(animDelay / 1000)
+                        time.sleep(delay / 1000)
                         print(color + no_full_str.center(width))
                         no_full_str += value
                     self._printed += '\n' + str(color + no_full_str.center(width))
@@ -416,6 +460,13 @@ class consoleClass:
         except:
             pass
         return returnedText
+    def start(self, apppath):
+        _0, _1, pid, _2 = win32process.CreateProcess(
+        None, apppath, None, None, 0,
+        win32con.NORMAL_PRIORITY_CLASS, None, None, win32process.STARTUPINFO())
+        for win in windows(False):
+            if win.pid == pid:
+                return win.hwnd
 console = consoleClass()
 cnsl = consoleClass()
 cmd = consoleClass()
@@ -426,9 +477,12 @@ def rand(x=0, y=0):
     if type(x) != list:
         return random.randint(x, y)
     else:
-        return random.randint(0, len(x)-1)
-def randStr(countKeysfff):
-    return randstr.randstr(countKeysfff)
+        return x[random.randint(0, len(x)-1)]
+def randStr(countKeys, symbols=None):
+    if symbols == None:
+        return randstr.randstr(countKeys)
+    else:
+        return randstr.randstr(countKeys, symbols)
 def copied():
     return pyperclip.paste()
 class base64Class:
@@ -441,7 +495,7 @@ class base64Class:
 base64 = base64Class()
 del base64Class
 class thread:
-    def __init__(self, func, name=None, daemon=None, group=None):
+    def __init__(self, func, name=None, daemon=True, group=None):
         self.function = func
         self.name = name
         self.daemon = daemon
@@ -474,7 +528,7 @@ class fileClass:
         file_ = open(file, 'rb')
         read_ = file_.read()
         file_.close()
-        return read_.encode()
+        return read_
     def write(self, file, strrrr):
         file_ = open(file, 'w')
         file_.write(strrrr)
@@ -492,8 +546,6 @@ class fileClass:
             return os.path.abspath(".")
     def files(self, src):
         return os.listdir(src)
-    def run(self, args):
-        subprocess.run(args)
     def convert(self, file, to_format):
         format_ = file.split('.')[-1]
         outfile = removeSuffix(file, format_)
@@ -513,8 +565,6 @@ files = fileClass()
 del fileClass
 def copy(strr):
     pyperclip.copy(strr)
-def off():
-    raise SystemExit
 class date:
     day = int(datetime.datetime.today().strftime('%d'))
     month = int(datetime.datetime.today().strftime('%m'))
@@ -529,19 +579,19 @@ class date:
 class sound:
     def __init__(self, pathsound):
         self.path = pathsound
-        self.sound = pygame.mixer.Sound(self.path)
+        self._sound = pygame.mixer.Sound(self.path)
     def play(self):
-        self.sound.play()
+        self._sound.play()
     def stop(self):
-        self.sound.stop()
+        self._sound.stop()
     @property
     def volume(self):
-        return self.sound.get_volume()
+        return self._sound.get_volume()
     def setVolume(self, x):
-        self.sound.set_volume(x)
+        self._sound.set_volume(x)
     @property
     def length(self):
-        return self.sound.get_length()
+        return self._sound.get_length()
 class voiceClass:
     def speak(self, text):
         speak_engine.say(text)
@@ -614,15 +664,15 @@ class youtubeClass:
                 self.link = link
                 self.avatar = avatar
 
-        def getLastAuthorVideo(self):
-            opts = Options()
-            opts.headless = True
-            opts.add_argument("--log-level=3")
-            browser = Firefox(options=opts, executable_path='geckodriver.exe')
-            browser.get(self.author.link)
-            link = browser.find_elements_by_xpath("//a[@id='thumbnail']")[0].get_attribute('href')
-            browser.close()
-            return self.get(link)
+            def getLastVideo(self):
+                opts = Options()
+                opts.headless = True
+                opts.add_argument("--log-level=3")
+                browser = Firefox(options=opts, executable_path='geckodriver.exe')
+                browser.get(self.link)
+                link = browser.find_elements_by_xpath("//a[@id='thumbnail']")[0].get_attribute('href')
+                browser.close()
+                return self.get(link)
 
         def download(self, on_progress_callback=lambda x: None,
                      on_complete_callback=None, proxies=None,
@@ -650,16 +700,6 @@ class youtubeClass:
             return file.download(output_path=output_path, filename=filename, filename_prefix=filename_prefix,
                                  skip_existing=skip_existing, timeout=timeout, max_retries=max_retries)
 
-    def getLastAuthorVideo(self, authorLink):
-        opts = Options()
-        opts.headless = True
-        opts.add_argument("--log-level=3")
-        browser = Firefox(options=opts, executable_path='geckodriver.exe')
-        browser.get(authorLink)
-        link = browser.find_elements_by_xpath("//a[@id='thumbnail']")[0].get_attribute('href')
-        browser.close()
-        return self.get(link)
-
     def search(self, string, limit=15):
         part = ys.VideosSearch(string, limit=limit).result()['result']
         all = []
@@ -671,7 +711,7 @@ youtube = youtubeClass()
 yt = youtubeClass()
 del youtubeClass
 
-def exit(way='default'):
+def kill(way='default'):
     if way == 'default':
         exit()
     elif way == 'raise':
@@ -680,16 +720,23 @@ def exit(way='default'):
         print("TypeError: exit(), argument: 'way' must be 'default' or 'raise'")
         raise SystemExit
 
-class json:
+class configJson:
     def __init__(self, file):
         self.file = file
-    def get(self, what=None):
+    def get(self):
         with open(self.file, encoding='utf-8') as file:
             data = jl.load(file)
         return data
     def set(self, to):
         with open(self.file, 'w', encoding='utf-8') as file:
             jl.dump(to, file, indent=4, sort_keys=True, ensure_ascii=False)
+
+class json:
+    def encode(self, text):
+        return json.dumps(text)
+    def decode(self, text):
+        return json.loads(text)
+json = json()
 
 def translate(text, from_, to_):
     translator = google_translator()
@@ -714,8 +761,8 @@ class mega:
     @property
     def files(self):
         return self.__client.get_files()
-    def rename(self, file):
-        self.__client.rename(self.__client.find(file))
+    def rename(self, file, to):
+        self.__client.rename(self.__client.find(file), to)
     def upload(self, file):
         self.__client.upload(file)
     def download(self, file, dest_path=None, dest_filename=None):
@@ -764,11 +811,21 @@ class mega:
         self.remove(file)
         self.upload(files.localFile(name))
         files.remove(files.localFile(name))
+    def clearFile(self, file):
+        self.remove(file)
+        self.create(file)
+    def create(self, file):
+        name = os.path.basename(os.path.normpath(file))
+        open(files.localFile(name),'w').close()
+        self.upload(files.localFile(name), file)
+        files.remove(files.localFile(name))
 
 class window:
     def __init__(self, window):
-        # self._win = win32con.GetConsoleWindow()
-        self._win = win32gui.FindWindow(None, window)
+        if type(window) == str:
+            self._win = win32gui.FindWindow(None, window)
+        else:
+            self._win = window
     def __str__(self):
         return self.name
     def close(self):
@@ -783,15 +840,19 @@ class window:
     def show(self):
         win32gui.ShowWindow(self._win, win32con.SW_SHOW)
     def move(self, x, y):
-        win32gui.SetWindowPos(self._win, x, y, self.size[0], self.size[1])
+        win32gui.MoveWindow(self._win, x, y, self.size[0], self.size[1], 0)
     def resize(self, width, height):
-        win32gui.SetWindowPos(self._win, self.position[0], self.position[1], width, height)
+        win32gui.MoveWindow(self._win, self.position[0], self.position[1], width, height, 0)
     def minimize(self):
         win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)
         return self.size
     def maximize(self):
         win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         return self.size
+    def block(self):
+        win32gui.EnableWindow(self._win, False)
+    def unblock(self):
+        win32gui.EnableWindow(self._win, True)
     @property
     def visible(self):
         return win32gui.IsWindowVisible(self._win)
@@ -811,6 +872,12 @@ class window:
     def name(self):
         return win32gui.GetWindowText(self._win)
     @property
+    def hwnd(self):
+        return self._win
+    @property
+    def pid(self):
+        return win32process.GetWindowThreadProcessId(self._win)[1]
+    @property
     def mouse(self):
         class mouse:
             nonlocal self
@@ -818,8 +885,10 @@ class window:
                 nonlocal self
                 global mouse
                 self.focus()
-                mouse.move(x+self.position[0], y+self.position[1])
+                beforePos = mouse.position
+                mouse.move(x+self.position[0], y+self.position[1], 10)
                 mouse.click(side)
+                mouse.move(mouse.position[0], mouse.position[1], 10)
             @property
             def position(self0):
                 global mouse
@@ -831,6 +900,6 @@ def windows(onlyVisible=True):
     def winEnumHandler(hwnd, ctx):
         nonlocal all, onlyVisible
         if win32gui.IsWindowVisible(hwnd) or onlyVisible == False:
-            all.append(window(win32gui.GetWindowText(hwnd)))
+            all.append(window(hwnd))
     win32gui.EnumWindows(winEnumHandler, None)
     return all
