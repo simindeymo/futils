@@ -1,49 +1,62 @@
 # Pre-installed libraries
 import os
 import time
-import msvcrt as m
 import re
 import random
 import sys
 import shutil
-import threading as thrd
 import json as jl
+import msvcrt as m
+import threading as thrd
 from volume import Volume
-import bitly
-import subprocess
-import pyHook
-import pyttsx3
 from mega import Mega
+import subprocess
+import pyttsx3
+import pyHook
+import bitly
 
 # Must be installed
-import keyboard as kl
-import mouse as ml
 import pyperclip
 import win32gui
 import win32api
 import win32ui
 import win32con
-import win32console
 import datetime
 import randstr
 import colorama
+import mouse as ml
 import win32process
+import win32console
+import keyboard as kl
 from pytube import YouTube
 import youtubesearchpython as ys
 from selenium.webdriver import Firefox
 from selenium.webdriver.firefox.options import Options
-from base64 import b64encode, b64decode
 from google_trans_new import google_translator
+from base64 import b64encode, b64decode
+from contextlib import contextmanager
 import speech_recognition as sr
 from fuzzywuzzy import fuzz
 import webbrowser
 import convertapi
-import pygame
+import pyautogui
 
+@contextmanager
+def _suppress_stdout():
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
+
+with _suppress_stdout():
+    import pygame
+    pygame.init()
 colorama.init(autoreset=True)
 convertapi.api_secret = 'QRttNaCK0tXSOHeY'
 speak_engine = pyttsx3.init()
-os.system('cls')
 
 def removeAllExceptNumbers(stringg):
     return re.sub("\D", "", stringg)
@@ -239,8 +252,10 @@ class consoleClass:
         self._printed = ''
         self._win = win32console.GetConsoleWindow()
     def focus(self):
+        self.hide()
         self.show()
         win32gui.BringWindowToTop(self._win)
+        win32gui.ShowWindow(self._win, win32con.SW_SHOWNORMAL)
     def unfocus(self):
         win32gui.SetForegroundWindow(self._win)
     def hide(self):
@@ -271,14 +286,14 @@ class consoleClass:
     @property
     def position(self):
         rect = win32gui.GetWindowRect(self._win)
-        x = rect[0]
+        x = rect[0]+7
         y = rect[1]
         return (x, y)
     @property
     def size(self):
         rect = win32gui.GetWindowRect(self._win)
         w = rect[2] - self.position[0]
-        h = rect[3] - self.position[1]
+        h = rect[3] - self.position[1]-7
         return (w, h)
     @property
     def printed(self):
@@ -290,6 +305,11 @@ class consoleClass:
             if i != sys.argv[0]:
                 args.append(i)
         return args
+    def screenshot(self, path):
+        rect = self.position+self.size
+        self.focus()
+        pyautogui.screenshot(path, region=rect)
+        return path
     def input(self, *string, center=False, delay=0, color=color.text.white, newLine=True, whitelist=None, limit=None):
         def inwlc(text, whitelist=None, count=None):
             if whitelist == None and count == None:
@@ -467,6 +487,9 @@ class consoleClass:
         for win in windows(False):
             if win.pid == pid:
                 return win.hwnd
+    def waitKey(self, text):
+        self.print(text)
+        msvcrt.getch()
 console = consoleClass()
 cnsl = consoleClass()
 cmd = consoleClass()
@@ -483,8 +506,6 @@ def randStr(countKeys, symbols=None):
         return randstr.randstr(countKeys)
     else:
         return randstr.randstr(countKeys, symbols)
-def copied():
-    return pyperclip.paste()
 class base64Class:
     def encode(self, string):
         string = str(string)
@@ -563,8 +584,14 @@ class fileClass:
 file = fileClass()
 files = fileClass()
 del fileClass
-def copy(strr):
-    pyperclip.copy(strr)
+class copyboard:
+    def copy(strr):
+        pyperclip.copy(strr)
+    def copied():
+        return pyperclip.paste()
+cb = copyboard()
+copies = copyboard()
+copyboard = copyboard()
 class date:
     day = int(datetime.datetime.today().strftime('%d'))
     month = int(datetime.datetime.today().strftime('%m'))
@@ -831,8 +858,10 @@ class window:
     def close(self):
         win32gui.PostMessage(self._win, win32con.WM_CLOSE, 0, 0)
     def focus(self):
+        self.hide()
         self.show()
         win32gui.BringWindowToTop(self._win)
+        win32gui.ShowWindow(self._win, win32con.SW_SHOWNORMAL)
     def unfocus(self):
         win32gui.SetForegroundWindow(self._win)
     def hide(self):
@@ -893,7 +922,10 @@ class window:
             def position(self0):
                 global mouse
                 return (self.position[0]-mouse.position[0], self.position[1]-mouse.position[1])
-
+    def screenshot(self, path):
+        self.focus()
+        pyautogui.screenshot(path, region=win32gui.GetWindowRect(self._win))
+        return path
 
 def windows(onlyVisible=True):
     all = []
@@ -903,3 +935,7 @@ def windows(onlyVisible=True):
             all.append(window(hwnd))
     win32gui.EnumWindows(winEnumHandler, None)
     return all
+
+def screenshot(path):
+    pyautogui.screenshot(path)
+    return path
