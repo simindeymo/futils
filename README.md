@@ -189,6 +189,10 @@ console.focus()
 ``` python
 console.unfocus()
 ```
+#### Screenshot console
+``` python
+console.screenshot(path)
+```
 ## Base64 (base64)
 ### Encode text
 ``` python
@@ -565,6 +569,10 @@ window.click(x, y, side='left')
 ``` python
 window.position
 ```
+### Screenshot window
+``` python
+window.screenshot
+```
 ## Copyboard (cp, copies, copyboard)
 ### Get copied text
 ``` python
@@ -626,4 +634,8 @@ translate(text, from, to)
 ### Get all windows
 ``` python
 windows(onlyVisible=True)
+```
+### Screenshot
+``` python
+screenshot(path)
 ```
