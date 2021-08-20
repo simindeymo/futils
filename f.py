@@ -292,7 +292,7 @@ class consoleClass:
     @property
     def size(self):
         rect = win32gui.GetWindowRect(self._win)
-        w = rect[2] - self.position[0]
+        w = rect[2] - self.position[0]-7
         h = rect[3] - self.position[1]-7
         return (w, h)
     @property
