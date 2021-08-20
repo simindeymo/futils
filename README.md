@@ -565,6 +565,15 @@ window.click(x, y, side='left')
 ``` python
 window.position
 ```
+## Copyboard (cp, copies, copyboard)
+### Get copied text
+``` python
+copyboard.copied()
+```
+### Copy text
+``` python
+copyboard.copy(text)
+```
 ## Other funcs
 ### Remove all characters in the string except numbers
 ``` python
@@ -600,14 +609,6 @@ Get a random number or get a random item in the list.
 ``` python
 rand(x, y)
 rand(list)
-```
-### Get copied text
-``` python
-copied()
-```
-### Copy text
-``` python
-copy(text)
 ```
 ### Kill program
 Stop the program in the usual way.
