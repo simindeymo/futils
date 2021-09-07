@@ -16,6 +16,7 @@ import pyHook
 import bitly
 
 # Must be installed
+import pathlib
 import pyperclip
 import win32gui
 import win32api
@@ -130,10 +131,14 @@ class blockInput():
     def __init__(self):
         self.hm = pyHook.HookManager()
 blockObj = blockInput()
-class keyClass:
+class keyboard:
     global blockObj
     __block = blockObj
-    keys = ['Ctrl', 'Shift', 'Alt', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\\', '!', '%', '^', '&', '\\', '*', '(', ')', '-', '_', '+', '=', '[', ']', '{', '}', '|', ';', ':', "'", '"', '/', '?', '.', '>', ',', '<', 'Escape', 'Space', 'BackSpace', 'Tab', 'Linefeed', 'Clear', 'Return', 'Pause', 'Scroll_Lock', 'Sys_Req', 'Delete', 'Home', 'Left', 'Up', 'Right', 'Down', 'Page_Up', 'Page_Down', 'End', 'Select', 'Print', 'Execute', 'Insert', 'Num_Lock', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
+    keys = ['Ctrl', 'Shift', 'Alt', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+            'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Escape', 'Space',
+            'BackSpace', 'Tab', 'Linefeed', 'Clear', 'Return', 'Pause', 'Scroll_Lock', 'Sys_Req', 'Delete', 'Home', 'Left', 'Up',
+            'Right', 'Down', 'Page_Up', 'Page_Down', 'End', 'Select', 'Print', 'Execute', 'Insert', 'Num_Lock', 'F1', 'F2', 'F3',
+            'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
     def press(self, key):
         kl.press(key)
     def release(self, key):
@@ -168,10 +173,9 @@ class keyClass:
         self.__block.block(timeout=timeout, kl=True, mouse=False)
     def unblock(self):
         self.__block.unblock(kl=True, mouse=False)
-keys = keyClass()
-keyboard = keyClass()
-del keyClass
-class mouseClass:
+keyboard = keyboard()
+keys = keyboard
+class mouse:
     global blockObj
     __block = blockObj
     def scroll(self, x):
@@ -180,12 +184,7 @@ class mouseClass:
         ml.click(button = side)
     @property
     def position(self):
-        class positionMouseClass:
-            x = ml.get_position()[0]
-            y = ml.get_position()[1]
-            def __repr__(self):
-                return ml.get_position()
-        return positionMouseClass()
+        return ml.get_position()
     def move(self, x, y, absolute=True, delay=100):
         ml.move(x, y, absolute=absolute, duration=delay/1000)
     def isPressed(self, side):
@@ -212,11 +211,10 @@ class mouseClass:
         self.__block.block(timeout=timeout, kl=False, mouse=True)
     def unblock(self):
         self.__block.unblock(kl=False, mouse=True)
-mouse = mouseClass()
-del mouseClass
+mouse = mouse()
 del blockObj
-class colorsClass:
-    class textClass:
+class colors:
+    class text:
         black = colorama.Fore.BLACK
         red = colorama.Fore.RED
         green = colorama.Fore.GREEN
@@ -225,9 +223,8 @@ class colorsClass:
         magenta = colorama.Fore.MAGENTA
         cyan = colorama.Fore.CYAN
         white = colorama.Fore.WHITE
-    text = textClass()
-    del textClass
-    class bgClass:
+    text = text()
+    class bg:
         black = colorama.Back.BLACK
         red = colorama.Back.RED
         green = colorama.Back.GREEN
@@ -236,21 +233,20 @@ class colorsClass:
         magenta = colorama.Back.MAGENTA
         cyan = colorama.Back.CYAN
         white = colorama.Back.WHITE
-    bg = bgClass()
-    del bgClass
-    class styleClass:
+    bg = bg()
+    class style:
         dim = colorama.Style.DIM
         normal = colorama.Style.NORMAL
         bright = colorama.Style.BRIGHT
-    style = styleClass()
-    del styleClass
-color = colorsClass()
-del colorsClass
+    style = style()
+color = colors()
 
-class consoleClass:
+class console:
     def __init__(self):
         self._printed = ''
         self._win = win32console.GetConsoleWindow()
+        self._blockThread = None
+        self._isBlock = False
     def focus(self):
         self.hide()
         self.show()
@@ -276,10 +272,55 @@ class consoleClass:
         return win32console.GetConsoleTitle()
     def setName(self, name):
         return win32console.SetConsoleTitle(name)
-    def block(self):
-        win32gui.EnableWindow(self._win, False)
+    def block(self, move=False, click=False):
+        self._isBlock = True
+        if not move and not click:
+            win32gui.EnableWindow(self._win, False)
+        elif move and not click:
+            def funcBlock(self):
+                blocked = False
+                while self._isBlock:
+                    if mouse.position[1]-self.position[1] > 30:
+                        if not blocked:
+                            win32gui.EnableWindow(self._win, False)
+                            blocked = True
+                    else:
+                        if blocked:
+                            win32gui.EnableWindow(self._win, True)
+                            blocked = False
+            if self._blockThread != None:
+                self._isBlock = False
+                self._blockThread.join()
+                self._isBlock = True
+            self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
+            self._blockThread.start()
+        elif not move and click:
+            def funcBlock(self):
+                blocked = False
+                while self._isBlock:
+                    if mouse.position[1]-self.position[1] <= 30:
+                        if not blocked:
+                            win32gui.EnableWindow(self._win, False)
+                            blocked = True
+                    else:
+                        if blocked:
+                            win32gui.EnableWindow(self._win, True)
+                            blocked = False
+            if self._blockThread != None:
+                self._isBlock = False
+                self._blockThread.join()
+                self._isBlock = True
+            self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
+            self._blockThread.start()
     def unblock(self):
+        self._isBlock = False
+        if self._blockThread != None:
+            self._blockThread.join()
+        self._blockThread = None
         win32gui.EnableWindow(self._win, True)
+    def pause(self, text='Press any key to continue...'):
+        self.print(text)
+        m.getch()
     @property
     def visible(self):
         return win32gui.IsWindowVisible(self._win)
@@ -490,10 +531,10 @@ class consoleClass:
     def waitKey(self, text):
         self.print(text)
         msvcrt.getch()
-console = consoleClass()
-cnsl = consoleClass()
-cmd = consoleClass()
-del consoleClass
+console = console()
+cnsl = console
+cmd = console
+
 def wait(ms):
     time.sleep(ms/1000)
 def rand(x=0, y=0):
@@ -506,15 +547,15 @@ def randStr(countKeys, symbols=None):
         return randstr.randstr(countKeys)
     else:
         return randstr.randstr(countKeys, symbols)
-class base64Class:
+class base64:
     def encode(self, string):
         string = str(string)
         return b64encode(string.encode('ascii')).decode('utf8')
     def decode(self, string):
         string = str(string)
         return b64decode(string).decode('utf8')
-base64 = base64Class()
-del base64Class
+base64 = base64()
+
 class thread:
     def __init__(self, func, name=None, daemon=True, group=None):
         self.function = func
@@ -544,7 +585,7 @@ class timer:
     @property
     def isStarted(self):
         return self.thread.isAlive()
-class fileClass:
+class files:
     def read(self, file):
         file_ = open(file, 'rb')
         read_ = file_.read()
@@ -560,11 +601,8 @@ class fileClass:
         os.remove(file)
     def exists(self, file):
         return os.path.isfile(file)
-    def local(self):
-        try:
-            return sys._MEIPASS
-        except Exception:
-            return os.path.abspath(".")
+    def localDir(self):
+        return str(pathlib.Path(win32api.GetFullPathName(__file__)).parent)
     def files(self, src):
         return os.listdir(src)
     def convert(self, file, to_format):
@@ -575,23 +613,20 @@ class fileClass:
         os.mkdir(dir)
     def removeDir(self, dir):
         shutil.rmtree(dir)
-    def localFile(self, path_string):
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = os.path.abspath(".")
+    def addedFile(self, path_string):
+        base_path = sys._MEIPASS
         return os.path.join(base_path, path_string)
-file = fileClass()
-files = fileClass()
-del fileClass
+file = files()
+files = file
+
 class copyboard:
     def copy(strr):
         pyperclip.copy(strr)
     def copied():
         return pyperclip.paste()
-cb = copyboard()
-copies = copyboard()
 copyboard = copyboard()
+cb = copyboard
+copies = copyboard
 class date:
     day = int(datetime.datetime.today().strftime('%d'))
     month = int(datetime.datetime.today().strftime('%m'))
@@ -619,7 +654,7 @@ class sound:
     @property
     def length(self):
         return self._sound.get_length()
-class voiceClass:
+class voice:
     def speak(self, text):
         speak_engine.say(text)
         speak_engine.runAndWait()
@@ -647,12 +682,12 @@ class voiceClass:
         else:
             speak_engine.save_to_file(text, filename)
             speak_engine.runAndWait()
-voice = voiceClass()
-del voiceClass
+voice = voice()
+
 def short(linkkkk):
     c = bitly.Connection(access_token='ae0f0e3b0c2dc29bd0667787ccfc7cb39b25ad62')
     return c.shorten(linkkkk)[u'url']
-class youtubeClass:
+class youtube:
     class get:
         link = None
         def __init__(self, link):
@@ -674,7 +709,7 @@ class youtubeClass:
                 authorAvatar = part['channel']['thumbnails'][-1]['url']
             except:
                 authorAvatar = None
-            self.author = self.__authorClass(authorName, authorId, authorLink, authorAvatar)
+            self.author = self.__author(authorName, authorId, authorLink, authorAvatar)
             self.preview = part['thumbnails'][-1]['url']
             try:
                 self.views = yt.views
@@ -684,7 +719,7 @@ class youtubeClass:
             except:
                 pass
 
-        class __authorClass:
+        class __author:
             def __init__(self, name, id, link, avatar):
                 self.name = name
                 self.id = id
@@ -734,9 +769,8 @@ class youtubeClass:
             all.append(self.get(p['link']))
         return all
 
-youtube = youtubeClass()
-yt = youtubeClass()
-del youtubeClass
+youtube = youtube()
+yt = youtube
 
 def kill(way='default'):
     if way == 'default':
@@ -878,9 +912,51 @@ class window:
     def maximize(self):
         win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         return self.size
-    def block(self):
-        win32gui.EnableWindow(self._win, False)
+    def block(self, move=False, click=False):
+        self._isBlock = True
+        if not move and not click:
+            win32gui.EnableWindow(self._win, False)
+        elif move and not click:
+            def funcBlock(self):
+                blocked = False
+                while self._isBlock:
+                    if mouse.position[1]-self.position[1] > 30:
+                        if not blocked:
+                            win32gui.EnableWindow(self._win, False)
+                            blocked = True
+                    else:
+                        if blocked:
+                            win32gui.EnableWindow(self._win, True)
+                            blocked = False
+            if self._blockThread != None:
+                self._isBlock = False
+                self._blockThread.join()
+                self._isBlock = True
+            self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
+            self._blockThread.start()
+        elif not move and click:
+            def funcBlock(self):
+                blocked = False
+                while self._isBlock:
+                    if mouse.position[1]-self.position[1] <= 30:
+                        if not blocked:
+                            win32gui.EnableWindow(self._win, False)
+                            blocked = True
+                    else:
+                        if blocked:
+                            win32gui.EnableWindow(self._win, True)
+                            blocked = False
+            if self._blockThread != None:
+                self._isBlock = False
+                self._blockThread.join()
+                self._isBlock = True
+            self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
+            self._blockThread.start()
     def unblock(self):
+        self._isBlock = False
+        if self._blockThread != None:
+            self._blockThread.join()
+        self._blockThread = None
         win32gui.EnableWindow(self._win, True)
     @property
     def visible(self):
@@ -906,22 +982,24 @@ class window:
     @property
     def pid(self):
         return win32process.GetWindowThreadProcessId(self._win)[1]
+    class _mouse:
+        def __init__(self, selff):
+            self.self = selff
+        def click(self, x, y, side='left'):
+            self.self.focus()
+            beforePos = mouse.position
+            mouse.move(x+self.self.position[0],
+                       y+self.self.position[1], 10)
+            mouse.click(side)
+            mouse.move(mouse.position[0], mouse.position[1], 10)
+        @property
+        def position(self):
+            global mouse
+            return (self.self.position[0]-mouse.position[0],
+                    self.self.position[1]-mouse.position[1])
     @property
     def mouse(self):
-        class mouse:
-            nonlocal self
-            def click(self0, x, y, side='left'):
-                nonlocal self
-                global mouse
-                self.focus()
-                beforePos = mouse.position
-                mouse.move(x+self.position[0], y+self.position[1], 10)
-                mouse.click(side)
-                mouse.move(mouse.position[0], mouse.position[1], 10)
-            @property
-            def position(self0):
-                global mouse
-                return (self.position[0]-mouse.position[0], self.position[1]-mouse.position[1])
+        return self._mouse(self)
     def screenshot(self, path):
         self.focus()
         pyautogui.screenshot(path, region=win32gui.GetWindowRect(self._win))
