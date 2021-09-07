@@ -181,6 +181,14 @@ console.hide()
 ``` python
 console.show()
 ```
+#### Block console
+``` python
+console.block(move=False, click=False)
+```
+#### Unblock console
+``` python
+console.unblock()
+```
 #### Focus console
 ``` python
 console.focus()
@@ -531,7 +539,7 @@ window.maximize()
 ```
 ### Block
 ``` python
-window.block
+window.block(move=False, click=False)
 ```
 ### Unblock
 ``` python
