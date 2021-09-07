@@ -274,6 +274,10 @@ class console:
         return win32console.SetConsoleTitle(name)
     def block(self, move=False, click=False):
         self._isBlock = True
+        if self._blockThread != None:
+            self._isBlock = False
+            self._blockThread.join()
+            self._isBlock = True
         if not move and not click:
             win32gui.EnableWindow(self._win, False)
         elif move and not click:
@@ -288,10 +292,6 @@ class console:
                         if blocked:
                             win32gui.EnableWindow(self._win, True)
                             blocked = False
-            if self._blockThread != None:
-                self._isBlock = False
-                self._blockThread.join()
-                self._isBlock = True
             self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
             self._blockThread.start()
         elif not move and click:
@@ -306,10 +306,6 @@ class console:
                         if blocked:
                             win32gui.EnableWindow(self._win, True)
                             blocked = False
-            if self._blockThread != None:
-                self._isBlock = False
-                self._blockThread.join()
-                self._isBlock = True
             self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
             self._blockThread.start()
     def unblock(self):
@@ -914,6 +910,10 @@ class window:
         return self.size
     def block(self, move=False, click=False):
         self._isBlock = True
+        if self._blockThread != None:
+            self._isBlock = False
+            self._blockThread.join()
+            self._isBlock = True
         if not move and not click:
             win32gui.EnableWindow(self._win, False)
         elif move and not click:
@@ -928,10 +928,6 @@ class window:
                         if blocked:
                             win32gui.EnableWindow(self._win, True)
                             blocked = False
-            if self._blockThread != None:
-                self._isBlock = False
-                self._blockThread.join()
-                self._isBlock = True
             self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
             self._blockThread.start()
         elif not move and click:
@@ -946,10 +942,6 @@ class window:
                         if blocked:
                             win32gui.EnableWindow(self._win, True)
                             blocked = False
-            if self._blockThread != None:
-                self._isBlock = False
-                self._blockThread.join()
-                self._isBlock = True
             self._blockThread = thrd.Thread(target=lambda: funcBlock(self), name='Block window')
             self._blockThread.start()
     def unblock(self):
